@@ -57,9 +57,9 @@ var gulp = require('gulp'),  // подключаем Gulp
     cache = require('gulp-cache'), // модуль для кэширования
     imagemin = require('gulp-imagemin'), // плагин для сжатия PNG, JPEG, GIF и SVG изображений
     jpegrecompress = require('imagemin-jpeg-recompress'), // плагин для сжатия jpeg	
-    pngquant = require('imagemin-pngquant'), // плагин для сжатия png
-    del = require('del'); // плагин для удаления файлов и каталогов
-
+    // pngquant = require('imagemin-pngquant'), // плагин для сжатия png
+    del = require('del'), // плагин для удаления файлов и каталогов
+    notify = require('gulp-notify');
 /* задачи */
 
 // запуск сервера
@@ -79,9 +79,12 @@ gulp.task('html:build', function () {
 // сбор стилей
 gulp.task('css:build', function () {
     return gulp.src(path.src.style) // получим main.scss
-        .pipe(plumber()) // для отслеживания ошибок
         .pipe(sourcemaps.init()) // инициализируем sourcemap
-        .pipe(sass()) // scss -> css
+        .pipe( sass().on( 'error', notify.onError(
+        {
+            message: "<%= error.message %>",
+            title  : "Sass Error!"
+        })))
         .pipe(autoprefixer({ // добавим префиксы
             browsers: autoprefixerList
         }))
@@ -100,7 +103,8 @@ gulp.task('js:build', function () {
         .pipe(uglify()) // минимизируем js
         .pipe(sourcemaps.write('./')) //  записываем sourcemap
         .pipe(gulp.dest(path.build.js)) // положим готовый файл
-        .pipe(webserver.reload({stream: true})); // перезагрузим сервер
+        .pipe(webserver.reload({stream: true})) // перезагрузим сервер
+        .pipe(notify('Build has been is complete'));
 });
 
 // перенос шрифтов
@@ -119,7 +123,7 @@ gulp.task('image:build', function () {
                 max: 90,
                 min: 80
             }),
-            pngquant(),
+            // pngquant(),
             imagemin.svgo({plugins: [{removeViewBox: false}]})
 		])))
         .pipe(gulp.dest(path.build.img)); // выгрузка готовых файлов
